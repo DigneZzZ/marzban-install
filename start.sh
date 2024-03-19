@@ -187,6 +187,7 @@ backend reality
 
 EOF
 
+systemctl restart haproxy
     echo "Файл haproxy.cfg создан."
 }
 
