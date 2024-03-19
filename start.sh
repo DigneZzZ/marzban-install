@@ -30,6 +30,49 @@ stop_marzban_haproxy() {
     echo "Marzban и Haproxy остановлены."
 }
 
+# Функция для изменения файла docker-compose.yml
+change_docker_compose() {
+    echo "Изменение файла docker-compose.yml..."
+
+    # Путь к файлу docker-compose.yml
+    docker_compose_file="/opt/marzban/docker-compose.yml"
+
+    # Проверка наличия файла docker-compose.yml
+    if [ ! -f "$docker_compose_file" ]; then
+        echo "Ошибка! Файл docker-compose.yml не найден."
+        return 1
+    fi
+
+    # Создание резервной копии файла docker-compose.yml
+    sudo cp "$docker_compose_file" "$docker_compose_file.bak"
+
+    # Замена содержимого файла docker-compose.yml
+    sudo cat > "$docker_compose_file" <<EOF
+
+services:
+  haproxy:
+    image: haproxy:latest
+    restart: always
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+      - /var/lib/marzban:/var/lib/marzban
+    ports:
+      - 80:80
+      - 443:443
+
+  marzban:
+    image: gozargah/marzban:latest
+    restart: always
+    env_file: .env
+    volumes:
+      - /var/lib/marzban:/var/lib/marzban
+    depends_on:
+      - haproxy
+EOF
+
+    echo "Файл docker-compose.yml изменен."
+}
+
 # Функция для изменения файла .env
 change_env_file() {
     echo "Изменение файла .env..."
@@ -38,31 +81,31 @@ change_env_file() {
     read -rp "Введите SUB_PROFILE_TITLE: " SUB_PROFILE_TITLE
     read -rp "Введите SUB_SUPPORT_URL: " SUB_SUPPORT_URL
 
-    # Проверка ввода XRAY_SUBSCRIPTION_URL_PREFIX
-    while true; do
-        read -rp "Введите XRAY_SUBSCRIPTION_URL_PREFIX (только английские буквы, цифры и допустимые символы): " XRAY_SUBSCRIPTION_URL_PREFIX
-        if [[ $XRAY_SUBSCRIPTION_URL_PREFIX =~ ^[a-zA-Z0-9_-]+$ ]]; then
-            break
-        else
-            echo "Ошибка! Вводите только английские буквы, цифры и допустимые символы."
-        fi
-    done
+# Проверка ввода XRAY_SUBSCRIPTION_URL_PREFIX
+while true; do
+    read -rp "Введите XRAY_SUBSCRIPTION_URL_PREFIX (только английские буквы, цифры и допустимые символы): " XRAY_SUBSCRIPTION_URL_PREFIX
+    if [[ $XRAY_SUBSCRIPTION_URL_PREFIX =~ ^[a-zA-Z0-9_-]+$ ]]; then
+        break
+    else
+        echo "Ошибка! Вводите только английские буквы, цифры и допустимые символы."
+    fi
+done
 
-    # Запрос пользователя ввода параметра $YOUR_PANEL_DOMAIN
-    while true; do
-        read -rp "Введите YOUR_PANEL_DOMAIN (домен без https://): " YOUR_PANEL_DOMAIN
-        # Проверка ввода наличия "https://"
-        if [[ $YOUR_PANEL_DOMAIN =~ ^https:// ]]; then
-            # Удаление "https://" из ввода, если присутствует
-            YOUR_PANEL_DOMAIN="${YOUR_PANEL_DOMAIN/https:\/\/}"
-        fi
-        # Проверка ввода на наличие недопустимых символов
-        if [[ $YOUR_PANEL_DOMAIN =~ [[:space:]] ]]; then
-            echo "Ошибка! Вводите домен без пробелов."
-        else
-            break
-        fi
-    done
+# Проверка ввода домена для адреса PANEL
+while true; do
+    read -rp "Введите домен для адреса PANEL: " YOUR_PANEL_DOMAIN
+    # Проверка наличия префикса https://
+    if [[ ! $YOUR_PANEL_DOMAIN =~ ^https:// ]]; then
+        # Добавление префикса https:// к введенному значению
+        YOUR_PANEL_DOMAIN="https://$YOUR_PANEL_DOMAIN"
+    fi
+    # Проверка корректности введенного домена
+    if [[ $YOUR_PANEL_DOMAIN =~ ^https://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+        break
+    else
+        echo "Ошибка! Введите корректный домен без префикса https://."
+    fi
+done
 
     # Заполнение файла .env
     cat > /opt/marzban/.env <<EOF
@@ -305,7 +348,7 @@ update_marzban() {
     echo "Обновление Marzban..."
 
     # Запуск команды обновления Marzban
-    marzban update -n
+    marzban restart -n
 
     echo "Marzban обновлен."
 }
@@ -315,6 +358,7 @@ main() {
     install_packages
     install_marzban_haproxy
     stop_marzban_haproxy
+    change_docker_compose
     change_env_file
     create_haproxy_config
     create_directories
@@ -322,6 +366,7 @@ main() {
     setup_ssl_certificates
     update_xray_config
     update_marzban
+    
 }
 
 # Вызов основной функции
