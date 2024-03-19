@@ -137,36 +137,24 @@ create_haproxy_config() {
 
     # Заполнение файла haproxy.cfg
     cat > "$haproxy_cfg_path" <<EOF
-global
-    log /dev/log    local0
-    log /dev/log    local1 notice
-    chroot /var/lib/haproxy
-    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
-    stats timeout 30s
-    user haproxy
-    group haproxy
-    daemon
-    ca-base /var/lib/marzban/certs/fullchain.pem
-    crt-base /var/lib/marzban/certs/key.pem
-    ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305>
-    ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
-    ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
 
-defaults
-    log     global
-    mode    http
-    option  httplog
-    option  dontlognull
-    timeout connect 5000
-    timeout client  50000
-    timeout server  50000
-    errorfile 400 /etc/haproxy/errors/400.http
-    errorfile 403 /etc/haproxy/errors/403.http
-    errorfile 408 /etc/haproxy/errors/408.http
-    errorfile 500 /etc/haproxy/errors/500.http
-    errorfile 502 /etc/haproxy/errors/502.http
-    errorfile 503 /etc/haproxy/errors/503.http
-    errorfile 504 /etc/haproxy/errors/504.http
+  defaults
+  mode tcp
+  timeout client 30s
+  timeout connect 4s
+  timeout server 30s
+
+global
+  maxconn 10000000
+
+frontend http_frontend
+  bind *:80
+  mode http
+  redirect scheme https code 301 if !{ ssl_fc }
+
+frontend https_frontend
+  bind *:443 ssl crt /var/lib/marzban/certs/key.pem
+  default_backend marzban_backend
 
 listen front
     mode tcp
@@ -178,7 +166,9 @@ listen front
     use_backend panel if { req.ssl_sni -m end $YOUR_PANEL_DOMAIN }
     use_backend sub if { req.ssl_sni -i end  $XRAY_SUBSCRIPTION_URL_PREFIX }
     use_backend reality if { req.ssl_sni -m end discordapp.com }
-    default_backend reality
+
+backend marzban_backend
+  server marzban /var/lib/marzban/marzban.socket
 
 backend panel
     mode tcp
@@ -191,8 +181,7 @@ backend sub
 backend reality
     mode tcp
     server srv1 127.0.0.1:12000 send-proxy
-backend marzban_backend
-    server marzban /var/lib/marzban/marzban.socket
+
 EOF
 
     echo "Файл haproxy.cfg создан."
