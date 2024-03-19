@@ -197,6 +197,7 @@ create_directories() {
 
     # Создание директорий
     sudo mkdir -p /var/lib/marzban/certs/
+    sudo mkdir -p /var/lib/marzban/xray-core/xray/
 }
 # Функция для установки необходимых пакетов для работы с сертификатами
 install_certificates_packages() {
