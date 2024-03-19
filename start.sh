@@ -18,16 +18,19 @@ install_marzban_haproxy() {
     sudo bash -c "$(curl -sL https://raw.githubusercontent.com/DigneZzZ/marzban-install/main/install.sh)" @ install
 
     echo "Установка завершена."
+
+    apt update
+apt install -y haproxy
 }
 
 # Функция для остановки Marzban и Haproxy
 stop_marzban_haproxy() {
-    echo "Остановка Marzban и Haproxy..."
+    echo "Остановка Marzban ..."
 
     # Остановка Marzban и Haproxy
     marzban down
 
-    echo "Marzban и Haproxy остановлены."
+    echo "Marzban остановлен."
 }
 
 # Функция для изменения файла docker-compose.yml
@@ -50,24 +53,13 @@ change_docker_compose() {
     sudo cat > "$docker_compose_file" <<EOF
 
 services:
-  haproxy:
-    image: haproxy:latest
-    restart: always
-    volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
-      - /var/lib/marzban:/var/lib/marzban
-    ports:
-      - 80:80
-      - 443:443
-
   marzban:
     image: gozargah/marzban:latest
     restart: always
     env_file: .env
     volumes:
       - /var/lib/marzban:/var/lib/marzban
-    depends_on:
-      - haproxy
+
 EOF
 
     echo "Файл docker-compose.yml изменен."
@@ -133,28 +125,41 @@ create_haproxy_config() {
     echo "Создание файла haproxy.cfg..."
 
     # Путь к файлу haproxy.cfg
-    haproxy_cfg_path="/opt/marzban/haproxy.cfg"
+    haproxy_cfg_path="/etc/haproxy/haproxy.cfg"
 
     # Заполнение файла haproxy.cfg
     cat > "$haproxy_cfg_path" <<EOF
 
-  defaults
-  mode tcp
-  timeout client 30s
-  timeout connect 4s
-  timeout server 30s
-
 global
-  maxconn 10000000
+    log /dev/log    local0
+    log /dev/log    local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
+    ca-base /var/lib/marzban/certs/fullchain.pem
+    crt-base /var/lib/marzban/certs/key.pem
+    ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305>
+    ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+    ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
 
-frontend http_frontend
-  bind *:80
-  mode http
-  redirect scheme https code 301 if !{ ssl_fc }
-
-frontend https_frontend
-  bind *:443 ssl crt /var/lib/marzban/certs/key.pem
-  default_backend marzban_backend
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+    errorfile 400 /etc/haproxy/errors/400.http
+    errorfile 403 /etc/haproxy/errors/403.http
+    errorfile 408 /etc/haproxy/errors/408.http
+    errorfile 500 /etc/haproxy/errors/500.http
+    errorfile 502 /etc/haproxy/errors/502.http
+    errorfile 503 /etc/haproxy/errors/503.http
+    errorfile 504 /etc/haproxy/errors/504.http
 
 listen front
     mode tcp
@@ -166,9 +171,7 @@ listen front
     use_backend panel if { req.ssl_sni -m end $YOUR_PANEL_DOMAIN }
     use_backend sub if { req.ssl_sni -i end  $XRAY_SUBSCRIPTION_URL_PREFIX }
     use_backend reality if { req.ssl_sni -m end discordapp.com }
-
-backend marzban_backend
-  server marzban /var/lib/marzban/marzban.socket
+    default_backend reality
 
 backend panel
     mode tcp
