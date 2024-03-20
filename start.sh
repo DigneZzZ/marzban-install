@@ -58,7 +58,7 @@ install_packages() {
 install_marzban_haproxy() {
     echo "Сейчас будет установлен Marzban"
 
-    # Установка Marzban+Haproxy
+    # Установка Marzban
     sudo bash -c "$(curl -sL https://raw.githubusercontent.com/DigneZzZ/marzban-install/main/install.sh)" @ install
 
     echo "Установка завершена."
@@ -66,11 +66,11 @@ install_marzban_haproxy() {
 
 }
 
-# Функция для остановки Marzban и Haproxy
+# Функция для остановки Marzban
 stop_marzban_haproxy() {
     echo "Остановка Marzban ..."
 
-    # Остановка Marzban и Haproxy
+    # Остановка Marzban
     marzban down
 
     echo "Marzban остановлен."
