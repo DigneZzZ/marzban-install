@@ -11,11 +11,11 @@ sudo bash -c "$(curl -sL https://raw.githubusercontent.com/DigneZzZ/marzban-inst
 ```
 
 ## todo list
-- [ ]Change DB (add MySQL)
-- [ ]add option - for Certs
-- [ ]add option - select subscription page
-- [ ]add option - select more inbounds
-- [ ]add option - add warp instalation
-- [ ]add option - add telegram settings
+- [ ] Change DB (add MySQL)
+- [ ] add option - for Certs
+- [ ] add option - select subscription page
+- [ ] add option - select more inbounds
+- [ ] add option - add warp instalation
+- [ ] add option - add telegram settings
 
 ## Our community: https://openode.xyz
