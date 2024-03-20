@@ -43,37 +43,37 @@ echo '
 '
 echo -e "\e[1m\e[33|Our community: https://openode.xyz\n\e[0m"
 sleep 2s
-
+# Function to update repositories
 # Функция для обновления репозиториев
 update_repositories() {
     sudo apt update && sudo apt upgrade -yqq
 }
-
+# Function to install necessary packages
 # Функция для установки необходимых пакетов
 install_packages() {
     sudo apt install -yqq git nano wget haproxy
 }
-
-# Функция для установки Marzban+Haproxy
+# Function to install Marzban
+# Функция для установки Marzban
 install_marzban_haproxy() {
-    echo "Сейчас будет установлен Marzban"
+    echo "Сейчас будет установлен Marzban / Marzban installation will begin now."
 
     # Установка Marzban
     sudo bash -c "$(curl -sL https://raw.githubusercontent.com/DigneZzZ/marzban-install/main/install.sh)" @ install
 
-    echo "Установка завершена."
+    echo "Установка завершена. / Installation completed."
 
 
 }
 
 # Функция для остановки Marzban
 stop_marzban_haproxy() {
-    echo "Остановка Marzban ..."
+    echo "Остановка Marzban ... Stopping Marzban"
 
     # Остановка Marzban
     marzban down
 
-    echo "Marzban остановлен."
+    echo "Marzban остановлен. Marzban Stopped"
 }
 
 # Функция для изменения файла docker-compose.yml
