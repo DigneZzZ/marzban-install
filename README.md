@@ -1,6 +1,9 @@
 ## What is this?
 This script will allow you to immediately install Marzban+Haproxy+Vless Reality + issue certificates for your domain
 
+## req
+new clear VPS server ubuntu 22.04  
+
 ## Install marzban without logs
 ```
 sudo bash -c "$(curl -sL https://raw.githubusercontent.com/DigneZzZ/marzban-install/main/install.sh)" @ install
