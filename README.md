@@ -1,4 +1,4 @@
-## What is?
+## What is this?
 This script will allow you to immediately install Marzban+Haproxy+Vless Reality + issue certificates for your domain
 
 ## Install marzban without logs
