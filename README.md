@@ -12,7 +12,7 @@ sudo bash -c "$(curl -sL https://raw.githubusercontent.com/DigneZzZ/marzban-inst
 
 ## todo list
 - [ ] Change DB (add MySQL)
-- [ ] add option - for Certs
+- [ ] add option - cert type (basic\wildcard)
 - [ ] add option - select subscription page
 - [ ] add option - select more inbounds
 - [ ] add option - add warp instalation
