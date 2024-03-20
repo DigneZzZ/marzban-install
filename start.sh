@@ -2,25 +2,24 @@
 
 # Функция для обновления репозиториев
 update_repositories() {
-    sudo apt update && sudo apt upgrade -y
+    sudo apt update && sudo apt upgrade -yqq
 }
 
 # Функция для установки необходимых пакетов
 install_packages() {
-    sudo apt install -y git nano wget
+    sudo apt install -yqq git nano wget haproxy
 }
 
 # Функция для установки Marzban+Haproxy
 install_marzban_haproxy() {
-    echo "Сейчас будет установлен Marzban+Haproxy."
+    echo "Сейчас будет установлен Marzban"
 
     # Установка Marzban+Haproxy
     sudo bash -c "$(curl -sL https://raw.githubusercontent.com/DigneZzZ/marzban-install/main/install.sh)" @ install
 
     echo "Установка завершена."
 
-    apt update
-apt install -y haproxy
+
 }
 
 # Функция для остановки Marzban и Haproxy
@@ -76,7 +75,7 @@ change_env_file() {
 # Проверка ввода XRAY_SUBSCRIPTION_URL_PREFIX
 while true; do
     read -rp "Введите XRAY_SUBSCRIPTION_URL_PREFIX (только английские буквы, цифры и допустимые символы): " XRAY_SUBSCRIPTION_URL_PREFIX
-    if [[ $XRAY_SUBSCRIPTION_URL_PREFIX =~ ^[a-zA-Z0-9_-]+$ ]]; then
+    if [[ $XRAY_SUBSCRIPTION_URL_PREFIX =~ ^https://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
         break
     else
         echo "Ошибка! Вводите только английские буквы, цифры и допустимые символы."
@@ -114,13 +113,12 @@ SUBSCRIPTION_PAGE_TEMPLATE="subscription/index.html"
 SUB_PROFILE_TITLE="$SUB_PROFILE_TITLE"
 SUB_SUPPORT_URL="$SUB_SUPPORT_URL"
 SUB_UPDATE_INTERVAL="1"
-XRAY_EXECUTABLE_PATH="/var/lib/marzban/xray-core/xray"
 EOF
 
     echo "Файл .env изменен."
 }
 
-# Функция для создания файла haproxy.cfg
+# Функция для создания\редактирования файла haproxy.cfg
 create_haproxy_config() {
     echo "Создание файла haproxy.cfg..."
 
@@ -169,7 +167,7 @@ listen front
     tcp-request content accept if { req_ssl_hello_type 1 }
 
     use_backend panel if { req.ssl_sni -m end $YOUR_PANEL_DOMAIN }
-    use_backend sub if { req.ssl_sni -i end  $XRAY_SUBSCRIPTION_URL_PREFIX }
+    use_backend sub if { req.ssl_sni -i end  $YOUR_PANEL_DOMAIN }
     use_backend reality if { req.ssl_sni -m end discordapp.com }
     default_backend reality
 
@@ -209,7 +207,7 @@ setup_ssl_certificates() {
     echo "Настройка SSL-сертификатов..."
 
     # Запрос пользователю ввода email для регистрации сертификата Let's Encrypt
-    read -rp "Введите ваш email для регистрации SSL-сертификата Let's Encrypt: " email
+    read -rp "Введите ваш email для регистрации SSL-сертификата Let's Encrypt (либо нажмите Enter для генерации случайного): " email
     # Проверка корректности введенного email
     if [[ ! "$email" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
         echo "Введенный email некорректен. Будет сгенерирован случайный email."
@@ -300,16 +298,7 @@ update_xray_config() {
     "routing": {
       "domainStrategy": "IPIfNonMatch",
       "rules": [
-        {
-          "type": "field",
-          "outboundTag": "warpplus",
-          "domain": [
-            "geosite:openai",
-            "spotify.com",
-            "whatismyip.com",
-            "reddit.com"
-          ]
-        },
+        
         {
             "ip": [
                 "geoip:private"
@@ -358,8 +347,8 @@ main() {
     create_directories
     install_certificates_packages
     setup_ssl_certificates
-    update_xray_config
     update_marzban
+    update_xray_config
     
 }
 
