@@ -17,5 +17,5 @@ sudo bash -c "$(curl -sL https://raw.githubusercontent.com/DigneZzZ/marzban-inst
 - [ ] add option - select more inbounds
 - [ ] add option - add warp instalation
 - [ ] add option - add telegram settings
-
+- [ ] add option - different "sub" option
 ## Our community: https://openode.xyz
