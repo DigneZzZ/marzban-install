@@ -304,7 +304,9 @@ update_xray_config() {
         },
         "streamSettings": {
           "network": "tcp",
-          "tcpSettings": {},
+          "tcpSettings": {
+          "acceptProxyProtocol": true
+          },
           "security": "reality",
           "realitySettings": {
             "show": false,
