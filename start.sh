@@ -260,8 +260,9 @@ setup_ssl_certificates() {
     fi
 
     # Установка acme.sh и запрос SSL-сертификата
+CERT_URL="${YOUR_PANEL_DOMAIN/https:\/\//}"
     curl https://get.acme.sh | sh -s email="$email"
-    ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt --issue --standalone -d "$YOUR_PANEL_DOMAIN" \
+    ~/.acme.sh/acme.sh --set-default-ca --server letsencrypt --issue --standalone -d "$CERT_URL" \
     --key-file /var/lib/marzban/certs/key.pem \
     --fullchain-file /var/lib/marzban/certs/fullchain.pem
 
@@ -304,7 +305,9 @@ update_xray_config() {
         },
         "streamSettings": {
           "network": "tcp",
-          "tcpSettings": {},
+          "tcpSettings": {
+          "acceptProxyProtocol": true
+          },
           "security": "reality",
           "realitySettings": {
             "show": false,
